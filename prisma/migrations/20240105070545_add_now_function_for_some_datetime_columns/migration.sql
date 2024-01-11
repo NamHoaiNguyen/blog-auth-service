@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "access_token" ALTER COLUMN "issued_at" SET DEFAULT CURRENT_TIMESTAMP,
+ALTER COLUMN "not_available_before" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "refresh_token" ALTER COLUMN "issued_at" SET DEFAULT CURRENT_TIMESTAMP,
+ALTER COLUMN "not_available_before" SET DEFAULT CURRENT_TIMESTAMP;

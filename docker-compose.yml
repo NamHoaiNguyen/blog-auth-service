@@ -1,0 +1,107 @@
+version: "3.8"
+services:
+    backend:
+        container_name: authorization-service
+        build: 
+            context: .
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        user: "1000:1000"
+        volumes:
+            - .:/home/node
+            - /home/node/node_modules
+        # environment:
+            # - DB_HOST=database-mysql
+            # - MYSQL_DATABASE=$MYSQL_DBNAME
+            # - MYSQL_PASSWORD=$MYSQL_PASSWORD
+            # - MYSQL_PORT=$MYSQL_PORT
+            # - REDIS_HOST=$cache
+            # - REDIS_PORT=$REDIS_PORT
+            # - REDIS_PASSWORD=$REDIS_PASSWORD
+        # depends_on:
+        #     - database-mysql
+        #     - redis-master
+        #     - redis-slave1
+        ports:
+            - '9956:9956'
+        expose:
+            - 9956
+    prisma:
+      image: prismagraphql/prisma:1.34
+      restart: unless-stopped
+      ports:
+      - '4466:4466'
+      environment:
+        PRISMA_CONFIG: |
+          port: 4466
+          managementApiSecret: mysecret42
+          databases:
+            default:
+              connector: postgres
+              host: postgres-db
+              port: 5432
+              user: prisma
+              password: prisma
+    postgres-db:
+      image: postgres:15
+      restart: unless-stopped
+      ports:
+        - 6584:5432
+      environment:
+        POSTGRES_USER: prisma
+        POSTGRES_PASSWORD: prisma
+      volumes:
+        - ./prisma:/prisma
+        - ./scripts:/scripts
+        - postgres:/var/lib/postgresql/data
+
+    # database-mysql:
+    #     image: mysql:8.0.28-debian
+    #     restart: unless-stopped
+    #     # user: "1000:1000"
+    #     volumes:
+    #         - dbdata:/var/lib/mysql
+    #     env_file:
+    #         - .env
+    #     environment:
+    #         - MYSQL_ROOT_USERNAME=$MYSQL_USERNAME
+    #         - MYSQL_ROOT_PASSWORD=$MYSQL_PASSWORD
+    #     ports:
+    #         - '3306:3306'
+    #     expose:
+    #         - 3306
+
+    # redis-master:
+    #     image: redis:6.2-alpine
+    #     restart: unless-stopped
+    #     ports:
+    #         - '6379:6379'
+    #     command: redis-server --save 20 1 --loglevel warning --requirepass 123
+    #     environment:
+    #         - REDIS_REPLICAATION_MODE=master
+    #     volumes:
+    #         - $PWD/redis-data:/var/lib/redis
+    #         - $PWD/redis-master-conf:/usr/local/etc/redis/redis.conf
+    #         # - cache:/data
+
+    # redis-slave1:
+    #     image: redis:6.2-alpine
+    #     restart: unless-stopped
+    #     ports:
+    #         - '6378:6379'
+    #     # command: redis-server --include /usr/local/etc/redis/redis.conf
+    #     command: redis-server --requirepass 123 --replicaof redis-master 6379 --masterauth 123
+    #     environment:
+    #         - REDIS_REPLICATION_MODE=slave
+    #     volumes:
+    #         - $PWD/redis-data:/var/lib/redis
+    #         - $PWD/redis-slave-conf/:/usr/local/etc/redis/redis.conf
+    #         # - cache:/data
+
+volumes:
+  postgres: ~
+
+networks:
+  blog-backend-network:
+    name: blog-backend-network
+    external: true
